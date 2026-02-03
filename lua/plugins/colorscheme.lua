@@ -1,22 +1,37 @@
+-- lua/plugins/colorscheme-gruvbox.lua
 return {
   {
-    "folke/tokyonight.nvim",
-    lazy = false,      -- que cargue al inicio
-    priority = 1000,   -- antes que otros plugins
+    "ellisonleao/gruvbox.nvim",
+    priority = 1000, -- carga antes que otros plugins UI
+    lazy = false,    -- aplica al iniciar
     opts = {
-      style = "night", -- ✅ night / storm / moon / day
-      transparent = false,
       terminal_colors = true,
-      styles = {
-        comments = { italic = true },
-        keywords = { italic = true },
-        functions = {},
-        variables = {},
+      undercurl = true,
+      underline = true,
+      bold = true,
+      italic = {
+        strings = true,
+        emphasis = true,
+        comments = true,
+        operators = false,
+        folds = true,
       },
+      strikethrough = true,
+      invert_selection = false,
+      invert_signs = false,
+      invert_tabline = false,
+      invert_intend_guides = false,
+      inverse = true, -- invierte highlights de búsqueda, diff, etc
+      contrast = "hard", -- "soft" | "medium" | "hard"
+      palette_overrides = {},
+      overrides = {},
+      dim_inactive = false,
+      transparent_mode = false,
     },
     config = function(_, opts)
-      require("tokyonight").setup(opts)
-      vim.cmd.colorscheme("tokyonight")
+      require("gruvbox").setup(opts)
+      vim.o.background = "dark" -- "dark" | "light"
+      vim.cmd.colorscheme("gruvbox")
     end,
   },
 }
