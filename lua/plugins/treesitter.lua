@@ -10,7 +10,7 @@ return {
     config = function()
       local ts = require("nvim-treesitter")
       local languages = {
-        "bash","c","diff","html","javascript","java","jsdoc","json","jsonc","lua","luadoc","luap",
+        "bash","c","diff","html","javascript","java","jsdoc","json","lua","luadoc","luap",
         "markdown","markdown_inline","printf","python","query","regex","toml","tsx","typescript",
         "vim","vimdoc","xml","yaml",
       }

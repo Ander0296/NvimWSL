@@ -1,4 +1,3 @@
-
 return {
   {
     "nvim-telescope/telescope.nvim",
@@ -6,8 +5,6 @@ return {
     version = false, -- usar HEAD
     dependencies = {
       "nvim-lua/plenary.nvim",
-
-      -- FZF nativo (opcional, si tienes cmake o make)
       {
         "nvim-telescope/telescope-fzf-native.nvim",
         build = (vim.fn.executable("cmake") == 1)
@@ -18,12 +15,11 @@ return {
     },
 
     -- =========================
-    -- KEYMAPS (TODOS EN UNO)
+    -- KEYMAPS
     -- =========================
     keys = function()
       local builtin = require("telescope.builtin")
 
-      -- Root del proyecto (similar a lo que hace LazyVim)
       local function project_root()
         local buf = vim.api.nvim_buf_get_name(0)
         local path = (buf ~= "" and vim.fs.dirname(buf)) or vim.uv.cwd()
@@ -36,38 +32,9 @@ return {
       end
 
       local function lazy_root()
-        -- carpeta donde lazy instala plugins: ~/.local/share/nvim/lazy (depende de stdpath("data"))
         return vim.fn.stdpath("data") .. "/lazy"
       end
 
-      local function open_with_trouble(...)
-        local ok, trouble = pcall(require, "trouble.sources.telescope")
-        if ok then
-          return trouble.open(...)
-        end
-      end
-
-      local function find_files_no_ignore(prompt_bufnr)
-        local ok, action_state = pcall(require, "telescope.actions.state")
-        if not ok then
-          builtin.find_files({ cwd = project_root(), no_ignore = true })
-          return
-        end
-        local line = action_state.get_current_line()
-        builtin.find_files({ cwd = project_root(), no_ignore = true, default_text = line })
-      end
-
-      local function find_files_with_hidden(prompt_bufnr)
-        local ok, action_state = pcall(require, "telescope.actions.state")
-        if not ok then
-          builtin.find_files({ cwd = project_root(), hidden = true })
-          return
-        end
-        local line = action_state.get_current_line()
-        builtin.find_files({ cwd = project_root(), hidden = true, default_text = line })
-      end
-
-      -- texto seleccionado en modo visual (para grep_string)
       local function get_visual_selection()
         local _, ls, cs = unpack(vim.fn.getpos("v"))
         local _, le, ce = unpack(vim.fn.getpos("."))
@@ -82,30 +49,6 @@ return {
         lines[1] = string.sub(lines[1], cs)
         lines[#lines] = string.sub(lines[#lines], 1, ce)
         return table.concat(lines, "\n")
-      end
-
-      -- Flash.nvim (opcional): si existe, añade saltos dentro de Telescope
-      local function flash(prompt_bufnr)
-        local ok_flash, flash_mod = pcall(require, "flash")
-        if not ok_flash then
-          return
-        end
-        flash_mod.jump({
-          pattern = "^",
-          label = { after = { 0, 0 } },
-          search = {
-            mode = "search",
-            exclude = {
-              function(win)
-                return vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= "TelescopeResults"
-              end,
-            },
-          },
-          action = function(match)
-            local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
-            picker:set_selection(match.pos[1] - 1)
-          end,
-        })
       end
 
       return {
@@ -174,7 +117,7 @@ return {
           desc = "Buscar archivo de configuración",
         },
 
-        -- buscar archivo dentro de plugins (lazy root)
+        -- plugins (lazy root)
         {
           "<leader>fp",
           function()
@@ -290,7 +233,13 @@ return {
     opts = function()
       local actions = require("telescope.actions")
 
-      -- comando de búsqueda de archivos (como LazyVim: rg/fd/find/where)
+      local function project_root()
+        local buf = vim.api.nvim_buf_get_name(0)
+        local path = (buf ~= "" and vim.fs.dirname(buf)) or vim.uv.cwd()
+        local root = vim.fs.root(path, { ".git", "Makefile", "package.json", "pyproject.toml", "go.mod" })
+        return root or vim.uv.cwd()
+      end
+
       local function find_command()
         if vim.fn.executable("rg") == 1 then
           return { "rg", "--files", "--color", "never", "-g", "!.git" }
@@ -305,6 +254,56 @@ return {
         end
       end
 
+      local function open_with_trouble(...)
+        local ok, trouble = pcall(require, "trouble.sources.telescope")
+        if ok then
+          return trouble.open(...)
+        end
+      end
+
+      local function flash(prompt_bufnr)
+        local ok_flash, flash_mod = pcall(require, "flash")
+        if not ok_flash then
+          return
+        end
+        flash_mod.jump({
+          pattern = "^",
+          label = { after = { 0, 0 } },
+          search = {
+            mode = "search",
+            exclude = {
+              function(win)
+                return vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= "TelescopeResults"
+              end,
+            },
+          },
+          action = function(match)
+            local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
+            picker:set_selection(match.pos[1] - 1)
+          end,
+        })
+      end
+
+      local function find_files_no_ignore(prompt_bufnr)
+        local action_state = require("telescope.actions.state")
+        local line = action_state.get_current_line()
+        require("telescope.builtin").find_files({
+          cwd = project_root(),
+          no_ignore = true,
+          default_text = line,
+        })
+      end
+
+      local function find_files_with_hidden(prompt_bufnr)
+        local action_state = require("telescope.actions.state")
+        local line = action_state.get_current_line()
+        require("telescope.builtin").find_files({
+          cwd = project_root(),
+          hidden = true,
+          default_text = line,
+        })
+      end
+
       return {
         defaults = {
           layout_strategy = "horizontal",
@@ -315,7 +314,6 @@ return {
           prompt_prefix = " ",
           selection_caret = " ",
 
-          -- abrir archivos en la primera ventana "real"
           get_selection_window = function()
             local wins = vim.api.nvim_list_wins()
             table.insert(wins, 1, vim.api.nvim_get_current_win())
@@ -330,87 +328,22 @@ return {
 
           mappings = {
             i = {
-              -- Trouble (si está instalado)
-              ["<c-t>"] = function(...)
-                local ok, trouble = pcall(require, "trouble.sources.telescope")
-                if ok then
-                  return trouble.open(...)
-                end
-              end,
-              ["<a-t>"] = function(...)
-                local ok, trouble = pcall(require, "trouble.sources.telescope")
-                if ok then
-                  return trouble.open(...)
-                end
-              end,
+              ["<c-t>"] = open_with_trouble,
+              ["<a-t>"] = open_with_trouble,
 
-              -- similares a LazyVim: alt+i / alt+h
-              ["<a-i>"] = function(prompt_bufnr)
-                local ok, action_state = pcall(require, "telescope.actions.state")
-                local line = ok and action_state.get_current_line() or nil
-                require("telescope.builtin").find_files({ no_ignore = true, default_text = line })
-              end,
-              ["<a-h>"] = function(prompt_bufnr)
-                local ok, action_state = pcall(require, "telescope.actions.state")
-                local line = ok and action_state.get_current_line() or nil
-                require("telescope.builtin").find_files({ hidden = true, default_text = line })
-              end,
+              ["<a-i>"] = find_files_no_ignore,
+              ["<a-h>"] = find_files_with_hidden,
 
               ["<C-Down>"] = actions.cycle_history_next,
               ["<C-Up>"] = actions.cycle_history_prev,
               ["<C-f>"] = actions.preview_scrolling_down,
               ["<C-b>"] = actions.preview_scrolling_up,
 
-              -- Flash.nvim (opcional)
-              ["<c-s>"] = function(prompt_bufnr)
-                local ok_flash, flash_mod = pcall(require, "flash")
-                if not ok_flash then
-                  return
-                end
-                flash_mod.jump({
-                  pattern = "^",
-                  label = { after = { 0, 0 } },
-                  search = {
-                    mode = "search",
-                    exclude = {
-                      function(win)
-                        return vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= "TelescopeResults"
-                      end,
-                    },
-                  },
-                  action = function(match)
-                    local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
-                    picker:set_selection(match.pos[1] - 1)
-                  end,
-                })
-              end,
+              ["<c-s>"] = flash,
             },
             n = {
               ["q"] = actions.close,
-
-              -- Flash.nvim (opcional)
-              ["s"] = function(prompt_bufnr)
-                local ok_flash, flash_mod = pcall(require, "flash")
-                if not ok_flash then
-                  return
-                end
-                flash_mod.jump({
-                  pattern = "^",
-                  label = { after = { 0, 0 } },
-                  search = {
-                    mode = "search",
-                    exclude = {
-                      function(win)
-                        return vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= "TelescopeResults"
-                      end,
-                    },
-                  },
-                  action = function(match)
-                    local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
-                    picker:set_selection(match.pos[1] - 1)
-                  end,
-                })
-              end,
+              ["s"] = flash,
             },
           },
         },
@@ -427,7 +360,7 @@ return {
     config = function(_, opts)
       local telescope = require("telescope")
       telescope.setup(opts)
-      pcall(telescope.load_extension, "fzf") -- si existe, lo carga
+      pcall(telescope.load_extension, "fzf")
     end,
   },
 }

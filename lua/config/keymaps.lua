@@ -60,6 +60,15 @@ map("i", ";", ";<c-g>u", { desc = "Punto de deshacer al escribir ;" })
 -- guardar archivo
 map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Guardar archivo" })
 
+-- Salir de todo
+vim.keymap.set("n", "<leader>qq", function()
+  if vim.fn.getbufinfo({ buflisted = 1, changed = 1 })[1] then
+    vim.cmd("confirm qa")
+  else
+    vim.cmd("qa")
+  end
+end, { desc = "Salir de todo" })
+
 -- keywordprg
 map("n", "<leader>K", "<cmd>norm! K<cr>", { desc = "Ayuda del término (keywordprg)" })
 

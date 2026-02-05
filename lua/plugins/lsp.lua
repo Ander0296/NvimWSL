@@ -12,7 +12,7 @@ return {
     dependencies = { "williamboman/mason.nvim" },
     opts = {
       automatic_installation = true,
-      -- ensure_installed = { "lua_ls", "pyright", "jdtls", "vtsls" },
+      ensure_installed = { "lua_ls", "pyright", "jdtls", "vtsls" },
     },
   },
 

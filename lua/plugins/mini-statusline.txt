@@ -1,0 +1,24 @@
+return {
+  {
+    "nvim-mini/mini.statusline",
+    event = "VeryLazy",
+    dependencies = {
+      "nvim-mini/mini.icons", -- opcional, pero recomendado
+    },
+    opts = {
+      set_vim_settings = true,
+      use_icons = true,
+    },
+    config = function(_, opts)
+      require("mini.statusline").setup(opts)
+
+      -- Opcional: statusline más limpio (sin ruler y sin modo nativo)
+      vim.o.showmode = false
+      vim.o.ruler = false
+
+      -- Opcional: separador global
+      -- vim.g.ministatusline_disable = false
+    end,
+  },
+}
+
